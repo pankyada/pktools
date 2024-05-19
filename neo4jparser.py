@@ -71,19 +71,27 @@ def convert_neo4j_to_force_graph(neo4j_response):
 @app.route('/fetch-formatted-data', methods=['POST'])
 def fetch_formatted_data():
     # Replace with your Neo4J credentials
-    neo4j_username = 'neo4j'
-    neo4j_password = 'qazwsx12'
+    neo4j_username = ''
+    neo4j_password = ''
     url = "http://localhost:7474/db/neo4j/tx"
     auth = HTTPBasicAuth(neo4j_username, neo4j_password)
-    body = {
-        "statements": [
-            {
-                "statement": "MATCH (m:Movie) <-[r]- (p:Person) return m,r,p"
-            }
-        ]
-    }
 
     try:
+        # Extract the Cypher query from the request body
+        request_data = request.get_json()
+        cypher_query = request_data.get('query')
+
+        if not cypher_query:
+            return jsonify({'error': 'Cypher query is required'}), 400
+
+        body = {
+            "statements": [
+                {
+                    "statement": cypher_query
+                }
+            ]
+        }
+
         neo4j_response = fetch_neo4j_data(url, auth, body)
         converted_response = convert_neo4j_to_force_graph(neo4j_response)
         return jsonify(converted_response)
